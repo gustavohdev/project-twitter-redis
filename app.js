@@ -55,41 +55,45 @@ app.post("/", (req, res) => {
       return
     }
 
-    client.hget('users', username, async (err, userid) => {
-      //console.log(userid)
-      const saltRounds = 10
-      //console.log(password, saltRounds)
-      const hash = await bcrypt.hash(password, saltRounds)
-      
-      if (!userid) {
-        //user does not exist, signup procedure
+    const handleSignup = (username,password) => {
+      //user does not exist, signup procedure
         client.incr('userid', async (err, userid) => {
-            client.hset('users', username, userid)
+          client.hset('users', username, userid)
 
-            client.hset(`user:${userid}`, 'hash', hash, 'username', username)
+          const saltRounds = 10
+          const hash = await bcrypt.hash(password, saltRounds)
 
-            saveSessionAndRenderDashboard(userid)
-          
-        })
-      } else {
-        console.log('3')
-        //user exists, login procedure
-        client.hget(`user:${userid}`, 'hash', async (err, hash) => {
-          const result = await bcrypt.compare(password, hash)
-          if (result) {
-            //password ok
-            saveSessionAndRenderDashboard(userid)
-          } else {
-            //wrong password
-            res.render("error", {
-              message: "Incorrect password",
-            })
-            return
-          }
-        })
+          client.hset(`user:${userid}`, 'hash', hash, 'username', username)
+
+          saveSessionAndRenderDashboard(userid)
+        
+      })
+    }
+
+    const handleLogin = (userid, password) =>{
+      //user exists, login procedure
+      client.hget(`user:${userid}`, 'hash', async (err, hash) => {
+        const result = await bcrypt.compare(password, hash)
+        if (result) {
+          //password ok
+          saveSessionAndRenderDashboard(userid)
+        } else {
+          //wrong password
+          res.render("error", {
+            message: "Incorrect password",
+          })
+          return
+        }
+      })
+    }
+
+    client.hget('users', username, async (err, userid) => {
+      if (!userid) { //signup procedure
+        handleSignup(username,password)
+      } else { //login procedure
+        handleLogin(userid, password)
       }
     })
-    //res.end()
   })
 
 app.listen(3000, () => console.log('Server Ready'))
