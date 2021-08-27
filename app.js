@@ -29,10 +29,45 @@ app.use(
 //app.get('/', (req,res) => res.send('Hello World'))
 app.get('/', (req,res) => {
   if(req.session.userid){
-    res.render("dashboard")
+    client.hkeys("users", (err, users) => {
+      console.log(users)
+      res.render("dashboard", {
+        users,
+      })
+    })
   }else{
     res.render('login')
   }
+})
+
+app.get("/post", (req, res) => {
+  if (req.session.userid) {
+    res.render("post")
+  } else {
+    res.render("login")
+  }
+})
+
+app.post("/post", (req, res) => {
+  if (!req.session.userid) {
+    res.render("login")
+    return
+  }
+
+  const { message } = req.body
+
+  client.incr("postid", async (err, postid) => {
+    client.hmset(
+      `post:${postid}`,
+      "userid",
+      req.session.userid,
+      "message",
+      message,
+      "timestamp",
+      Date.now()
+    )
+    res.render("dashboard")
+  })
 })
 
 
@@ -43,7 +78,11 @@ app.post("/", (req, res) => {
     const saveSessionAndRenderDashboard = (userid) => {
       req.session.userid = userid
       req.session.save()
-      res.render("dashboard")
+      client.hkeys("users", (err, users) => {
+        res.render("dashboard", {
+          users,
+        })
+      })
     }
 
     console.log(req.body, username, password)
