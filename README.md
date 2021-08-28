@@ -1,6 +1,9 @@
 
 # Simple Clone of Twiiter with Redis
 
+# To Run
+- just clone it, use "npm i" ( for libraries ), after that, "nodemon app.js" to run.
+
 # Implemented
 - We added a signup/registration on top of Redis
 - We allowed people to follow each other
@@ -15,3 +18,4 @@
 - Allow to upload images
 - Implement “favorites”
 - Implement a way to reply to messages
+
