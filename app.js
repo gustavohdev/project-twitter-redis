@@ -70,6 +70,26 @@ app.post("/post", (req, res) => {
   })
 })
 
+app.post("/follow", (req, res) => {
+  if (!req.session.userid) {
+    res.render("login")
+    return
+  }
+
+  const { username } = req.body
+
+  client.hget(
+    `user:${req.session.userid}`,
+    "username",
+    (err, currentUserName) => {
+      client.sadd(`following:${currentUserName}`, username)
+      client.sadd(`followers:${username}`, currentUserName)
+    }
+  )
+
+  res.redirect("/")
+})
+
 
 
 app.post("/", (req, res) => {
