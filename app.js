@@ -6,6 +6,9 @@ const client = redis.createClient()
 const bcrypt = require('bcrypt')
 const session = require('express-session')
 const RedisStore = require('connect-redis')(session)
+const { promisify } = require('util')
+
+
 
 app.set('view engine', 'pug')
 app.set('views', path.join(__dirname, "views"))
@@ -28,13 +31,23 @@ app.use(
 
 //app.get('/', (req,res) => res.send('Hello World'))
 app.get('/', (req,res) => {
-  if(req.session.userid){
-    client.hkeys("users", (err, users) => {
-      console.log(users)
-      res.render("dashboard", {
-        users,
-      })
-    })
+    if (req.session.userid) {
+      client.hget(
+        `user:${req.session.userid}`,
+        "username",
+        (err, currentUserName) => {
+          client.smembers(`following:${currentUserName}`, (err, following) => {
+            client.hkeys("users", (err, users) => {
+              res.render("dashboard", {
+                users: users.filter(
+                  (user) =>
+                    user !== currentUserName && following.indexOf(user) === -1
+                ),
+              })
+            })
+          })
+        }
+      )
   }else{
     res.render('login')
   }
