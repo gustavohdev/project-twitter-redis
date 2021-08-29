@@ -112,20 +112,18 @@ app.post("/follow", (req, res) => {
 app.post("/", (req, res) => {
     const { username, password } = req.body;
 
+    if (!username || !password) {
+      res.render("error", {
+          message: "Please set both username and password",
+      });
+      return;
+  }
+
     const saveSessionAndRenderDashboard = (userid) => {
         req.session.userid = userid;
         req.session.save();
         res.redirect("/");
     };
-
-    console.log(req.body, username, password);
-
-    if (!username || !password) {
-        res.render("error", {
-            message: "Please set both username and password",
-        });
-        return;
-    }
 
     const handleSignup = (username, password) => {
         //user does not exist, signup procedure
